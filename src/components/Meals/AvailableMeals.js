@@ -6,12 +6,17 @@ import MealItem from './MealItem/MealItem';
 const AvailableMeals = () => {
   const [meals, setMeals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [httpError, setHttpError] = useState(null);
 
   useEffect(() => {
     fetch(
       'https://react-http-cbf50-default-rtdb.europe-west1.firebasedatabase.app/meals.json',
     )
       .then((response) => {
+        if (!response.ok) {
+          throw new Error('Something went wrong!');
+        }
+
         return response.json();
       })
       .then((data) => {
@@ -20,18 +25,21 @@ const AvailableMeals = () => {
         const loadedMeals = [];
 
         for (const key in data) {
-          loadedMeals.push(
-            {
+          loadedMeals.push({
             id: key,
             name: data[key].name,
             description: data[key].description,
-            price: data[key].price
-          }
-          )
+            price: data[key].price,
+          });
         }
 
         setMeals(loadedMeals);
         setIsLoading(false);
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        console.log(error);
+        setHttpError(error.message);
       });
   }, []);
 
@@ -41,6 +49,14 @@ const AvailableMeals = () => {
         <p>Loading...</p>
       </section>
     );
+  }
+
+  if (httpError) {
+    return (
+      <section className={classes['meals--error']}>
+        <p>{httpError}</p>
+      </section>
+    )
   }
 
   const mealsList = meals.map((meal) => (
@@ -56,7 +72,7 @@ const AvailableMeals = () => {
   return (
     <section className={classes.meals}>
       <Card>
-      <ul>{mealsList}</ul>
+        <ul>{mealsList}</ul>
       </Card>
     </section>
   );
